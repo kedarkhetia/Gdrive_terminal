@@ -1,4 +1,9 @@
-# Gdrive_terminal
-Gdrive terminal, script that creates zip of file and upload it to your gdrive
+|  Gdrive_terminal  |
 
--> only first time login is required and then every time by using script you can upload your zip without verification  
+	-> drive module created for basic download and upload operations
+	-> examples are given in example folder
+	-> sources are provided with setup.py
+	-> to install use :
+		
+			#python setup.py build
+			#python setup.py install
