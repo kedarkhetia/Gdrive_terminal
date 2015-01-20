@@ -55,12 +55,9 @@ class gdrive:
 		new_file = self.drive_service.files().insert(body=body, media_body=media_body).execute()
 		pprint.pprint(new_file)
 		
-	def download(self):
-		lst = []
-		count = 0
-		index = 0
-		def retrieve_all_files(service):
+	def retrieve_all_files(self):
 		  result = []
+		  service = self.drive_service
 		  page_token = None
 		  while True:
 		    try:
@@ -77,22 +74,26 @@ class gdrive:
 		      print 'An error occurred: %s' % error
 		      break
 		  return result
-
-		list_of_files = retrieve_all_files(self.drive_service)
+		  
+	def print_all_files(self,list_of_files):
+		self.lst = []
+		self.count = 0
+		self.index = 0
 		for line in list_of_files:
 			print'\n'
-			count = count + 1
+			self.count = self.count + 1
 			for subline in line:
 				if subline == 'webContentLink':
-					index = index + 1
-					print 'INDEX: ',index
-					lst.append(line[subline])
+					self.index = self.index + 1
+					print 'INDEX: ',self.index
+					self.lst.append(line[subline])
 					print 'webContentLink: ',line[subline]
 					print 'title: ',line['title'],'\n'
 
-
+	def download(self,lst):
+		self.lst = lst
 		download_index = int(raw_input('Enter downloadUrl index: '))
-		download_url = lst[download_index-1]    
+		download_url = self.lst[download_index-1]    
 
 		dlink = 'wget '+ download_url
 		abc = os.popen(dlink).read()	
