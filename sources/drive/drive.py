@@ -1,12 +1,12 @@
 import os
 import pprint
 import httplib2
-import apiclient.discovery
-import apiclient.http
+import googleapiclient.discovery
+import googleapiclient.http
 import oauth2client.client
 from oauth2client.file import Storage
-from apiclient import errors
-from apiclient.http import BatchHttpRequest
+from googleapiclient import errors
+from googleapiclient.http import BatchHttpRequest
 
 
 class gdrive:
@@ -34,14 +34,27 @@ class gdrive:
 
 		http = httplib2.Http()
 		credentials.authorize(http)
-		self.drive_service = apiclient.discovery.build('drive', 'v2', http=http)
+		self.drive_service = googleapiclient.discovery.build('drive', 'v2', http=http)
+
+	def insert_permission(self, file_id , value, perm_type, role):
+	  new_permission = {
+	      'value' : value,
+	      'type': perm_type,
+	      'role': role
+	  }
+	  try:
+	    return self.drive_service.permissions().insert(
+		fileId=file_id, body=new_permission).execute()
+	  except errors.HttpError, error:
+	    print 'An error occurred: %s' % error
+	  return None
 
 	def upload(self,FILENAME,MIMETYPE,TITLE,DESCRIPTION):
 		self.FILENAME = FILENAME
 		self.MIMETYPE = MIMETYPE
 		self.TITLE = TITLE
 		self.DESCRIPTION = DESCRIPTION
-		media_body = apiclient.http.MediaFileUpload(
+		media_body = googleapiclient.http.MediaFileUpload(
 		self.FILENAME,
 		mimetype=self.MIMETYPE,
 		resumable=True
@@ -49,11 +62,34 @@ class gdrive:
 
 		body = {
 		'title': self.TITLE,
-		'description': self.DESCRIPTION,
+		'description': self.DESCRIPTION
 		}
 
 		new_file = self.drive_service.files().insert(body=body, media_body=media_body).execute()
 		pprint.pprint(new_file)
+
+	def upload(self,FILENAME,MIMETYPE,TITLE,DESCRIPTION,FOLDER_ID):
+		self.FILENAME = FILENAME
+		self.MIMETYPE = MIMETYPE
+		self.TITLE = TITLE
+		self.DESCRIPTION = DESCRIPTION
+		media_body = googleapiclient.http.MediaFileUpload(
+		self.FILENAME,
+		mimetype=self.MIMETYPE,
+		resumable=True
+		)
+
+			body = {
+			'title': self.TITLE,
+			'description': self.DESCRIPTION,
+			 "parents": [{
+			    "kind": "drive#parentReference",
+			    "id": FOLDER_ID
+			  	}]
+			}
+
+			new_file = self.drive_service.files().insert(body=body, media_body=media_body).execute()
+			pprint.pprint(new_file)
 
 	def retrieve_all_files(self):
 		  result = []
@@ -85,37 +121,38 @@ class gdrive:
 		self.index = 0
 		self.list_of_files = list_of_files
 		for line in list_of_files:
-			print'\n'
+			print '\n'
 			self.count = self.count + 1
 			for subline in line:
-				if subline == 'webContentLink':
+				if subline == 'id':
 					self.index = self.index + 1
 					print 'INDEX: ',self.index
-					self.lst.append(line[subline])
-					print 'webContentLink: ',line[subline]
+					try:
+						self.lst.append(line['webContentLink'])
+						print 'webContentLink: ',line['webContentLink']
+					except:
+						self.lst.append("NULL")
+						print "This is a folder"
+
 					self.lst_name.append(line['title'])
-					if(line['title'] == 'flag.txt' and self.flag_file == None):
-						self.flag_file = line[subline]
 					print 'title: ',line['title']
 					print 'ID : ',line['id']
 
 
-	def set_permissions(self,string):
-		for line in self.list_of_files:
+	def get_folder_id(self,folder_name,list_of_files):
+		for line in list_of_files:
 			for subline in line:
-				if subline == 'title':
-					if line[subline] == string:
-						self.id = line['id']
-						self.permission = line['permissionId']
+				if line['title'] == folder_name:
+					return line['id']
 
 
-
-
-	def download(self):
+	def download(self,name):
 		#self.lst = lst
-		download_index = int(raw_input('Enter downloadUrl index: '))
-		download_url = self.lst[download_index - 1]
-		stri = self.lst_name[download_index - 1]
+
+		for i in range(len(self.lst_name)):
+			if self.lst_name[i] == name:
+				download_url = self.lst[i]
+				stri = self.lst_name[i]
 
 		dlink = 'wget '+ download_url
 		abc = os.popen(dlink).read()
@@ -127,13 +164,6 @@ class gdrive:
 			lst1 = string.split('&')
 			lst2 = lst1[0].split('/')
 
-		'''if self.lst_name[download_index - 1].endswith('jpg'):
-			stri = stri + '.jpg'
-		if self.lst_name[download_index - 1].endswith('png'):
-			stri = stri + '.png'
-		if self.lst_name[download_index - 1].endswith('gif'):
-			stri = stri + '.gif'
-		os.popen('mv ' + lst[3] + " /home/kedarkhetia/Desktop/py-slideshow/images/" + stri) '''
 		os.popen('mv ' + lst2[3] + ' ' + stri)
 
 	def download_if_flag(self):

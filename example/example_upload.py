@@ -2,7 +2,9 @@ import os
 from drive import drive
 
 FILENAME = raw_input('path of file to upload : ')
-#FILENAME = 'backup.zip'
+FOLDER_NAME = raw_input('folder to upload file in : ')
+list_of_files = obj.retrieve_all_files()
+FOLDER_ID = get_folder_id(FOLDER_NAME,list_of_files)
 
 MIMETYPE = '*/*'
 TITLE = raw_input('Title : ')
@@ -13,4 +15,4 @@ if(FILENAME.endswith('.txt')):
 
 obj = drive.gdrive()
 
-obj.upload(FILENAME,MIMETYPE,TITLE,DESCRIPTION)
+obj.upload(FILENAME,MIMETYPE,TITLE,DESCRIPTION,FOLDER_ID)
